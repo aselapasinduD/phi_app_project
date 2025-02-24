@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "565214350627",
+    "project_id": "phi-app-62c8f",
+    "storage_bucket": "phi-app-62c8f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:565214350627:android:3cd8a20455bbb66c1a1096",
+        "android_client_info": {
+          "package_name": "com.example.phi_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBmrqUZ-F-uA-mHutZPa3AUxicQdV6g4ZQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
