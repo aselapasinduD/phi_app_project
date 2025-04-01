@@ -1,8 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:phi_app/components/login_button.dart';
 import 'package:phi_app/components/login_text_field.dart';
 import 'package:phi_app/components/my_colors.dart';
+import 'package:phi_app/models/userModel.dart';
+import 'package:provider/provider.dart';
 
 class LoginPage extends StatefulWidget {
   final Function()? onTap;
@@ -25,6 +28,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void signUserIn() async {
+    if (!mounted) return;
     // loading circle
     showDialog(
       context: context,
@@ -36,15 +40,22 @@ class _LoginPageState extends State<LoginPage> {
     );
 
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: emailController.text,
-        password: passwordController.text,
+      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
       );
+
     } on FirebaseAuthException catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+      }
+      showLoginError(e);
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+      }
       showLoginError(e);
     }
-
-    Navigator.pop(context);
   }
 
   @override

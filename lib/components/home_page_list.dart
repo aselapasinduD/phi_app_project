@@ -3,8 +3,13 @@ import 'package:phi_app/components/my_colors.dart';
 
 class HomePageList extends StatelessWidget {
   final List<Map<String, dynamic>> items;
+  final Function(int) onTap;
 
-  const HomePageList({super.key, required this.items});
+  const HomePageList({
+    super.key,
+    required this.items,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -38,14 +43,7 @@ class HomePageList extends StatelessWidget {
                     color: MyColors.mainColor
                     ),
                     
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text("${items[index]['title']} clicked"),
-                      duration: Duration(seconds: 1),
-                    ),
-                  );
-                },
+                onTap: () => onTap(index),
               ),
             ),
           ),

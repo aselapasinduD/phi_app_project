@@ -1,8 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:phi_app/components/login_button.dart';
 import 'package:phi_app/components/login_text_field.dart';
 import 'package:phi_app/components/my_colors.dart';
+import '../models/userModel.dart';
 
 class RegisterPage extends StatefulWidget {
   final Function()? onTap;
@@ -14,6 +16,7 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
+  final fullNameControllerReg = TextEditingController();
   final emailControllerReg = TextEditingController();
   final passwordControllerReg = TextEditingController();
   final confirmPasswordControllerReg = TextEditingController();
@@ -39,12 +42,27 @@ class _RegisterPageState extends State<RegisterPage> {
     // create user
     if (passwordControllerReg.text == confirmPasswordControllerReg.text) {
       try {
-        await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
           email: emailControllerReg.text,
           password: passwordControllerReg.text,
         );
-        // showSignUpError('Account Created! Please Log in');
+
+        UserModel userModel = UserModel(
+          id: userCredential.user!.uid,
+          email: emailControllerReg.text,
+          name: fullNameControllerReg.text,
+          role: UserRole.user,
+          createdAt: DateTime.now(),
+        );
+
+        // Save user to Firestore
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userModel.id)
+            .set(userModel.toFirestore());
+
       } on FirebaseAuthException catch (e) {
+        // showSignUpError('Account Created! Please Log in');
         showSignUpError(e);
       }
     } else {
@@ -94,6 +112,19 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
             SizedBox(
               height: 10,
+            ),
+
+            // Name field
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 26),
+              child: LoginTextField(
+                controller: fullNameControllerReg,
+                obscureText: false,
+                hintText: 'Full Name',
+              ),
+            ),
+            SizedBox(
+              height: 20,
             ),
 
             // email field

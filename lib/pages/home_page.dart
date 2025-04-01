@@ -4,6 +4,11 @@ import 'package:phi_app/components/app_drawer.dart';
 import 'package:phi_app/components/home_page_list.dart';
 import 'package:phi_app/components/my_colors.dart';
 import 'package:phi_app/pages/about_page.dart';
+import 'package:phi_app/pages/task_management_page.dart';
+import 'package:phi_app/pages/analytics_dashboard_page.dart';
+import 'package:phi_app/pages/data_reporting_page.dart';
+import 'package:phi_app/pages/fumigation_management_page.dart';
+import 'package:phi_app/pages/gis_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -13,15 +18,41 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-
   // List of main pages
   final List<Map<String, dynamic>> homePageItems = [
-    {"title": "Task Management", "icon": Icons.task},
-    {"title": "Analytics Dashboard", "icon": Icons.analytics},
-    {"title": "Data Reporting", "icon": Icons.bar_chart},
-    {"title": "Fumigation Management", "icon": Icons.bug_report},
-    {"title": "Geographic Information System", "icon": Icons.map},
+    {
+      "title": "Task Management",
+      "icon": Icons.task,
+      "page": const TaskManagementPage()
+    },
+    {
+      "title": "Analytics Dashboard",
+      "icon": Icons.analytics,
+      "page": const AnalyticsDashboardPage()
+    },
+    {
+      "title": "Data Reporting",
+      "icon": Icons.bar_chart,
+      "page": DataReportingPage()
+    },
+    {
+      "title": "Fumigation Management",
+      "icon": Icons.bug_report,
+      "page": const FumigationManagementPage()
+    },
+    {
+      "title": "Geographic Information System",
+      "icon": Icons.map,
+      "page": const GISPage()
+    },
   ];
+
+  void _navigateToPage(int index) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => homePageItems[index]["page"]),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,9 +83,11 @@ class _HomePageState extends State<HomePage> {
 
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: HomePageList(items: homePageItems),
+        child: HomePageList(
+          items: homePageItems,
+          onTap: _navigateToPage,
+        ),
       ),
     );
   }
-
 }
