@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../services/weatherService.dart';
 
 class FumigationTaskModel {
   String? id;
@@ -6,7 +7,6 @@ class FumigationTaskModel {
   String address;
   GeoPoint location;
   DateTime scheduledDateTime;
-  String? weatherForecast;
   List<String> assignedMembers;
   bool isCompleted;
   String createdBy;
@@ -20,7 +20,6 @@ class FumigationTaskModel {
     required this.address,
     required this.location,
     required this.scheduledDateTime,
-    this.weatherForecast,
     this.assignedMembers = const [],
     this.isCompleted = false,
     required this.createdBy,
@@ -38,7 +37,6 @@ class FumigationTaskModel {
       address: data['address'] ?? '',
       location: data['location'] ?? const GeoPoint(0, 0),
       scheduledDateTime: (data['scheduledDateTime'] as Timestamp).toDate(),
-      weatherForecast: data['weatherForecast'],
       assignedMembers: List<String>.from(data['assignedMembers'] ?? []),
       isCompleted: data['isCompleted'] ?? false,
       createdBy: data['createdBy'] ?? '',
@@ -55,7 +53,6 @@ class FumigationTaskModel {
       'address': address,
       'location': location,
       'scheduledDateTime': Timestamp.fromDate(scheduledDateTime),
-      'weatherForecast': weatherForecast,
       'assignedMembers': assignedMembers,
       'isCompleted': isCompleted,
       'createdBy': createdBy,
@@ -63,6 +60,27 @@ class FumigationTaskModel {
       'createdAt': createdAt ?? Timestamp.now(),
       'updatedAt': Timestamp.now(),
     };
+  }
+
+  // Method to get weather info for every fumigation task
+  Future<Map<String, String>> getWeatherInfo() async {
+    try {
+      final weatherData = await WeatherService.getWeatherForecast(
+          location,
+          scheduledDateTime
+      );
+
+      return {
+        'windSpeed': weatherData.windSpeed,
+        'rainStatus': weatherData.rainStatus,
+      };
+    } catch (e) {
+      // debugPrint('Error getting weather information: $e');
+      return {
+        'windSpeed': 'Not available',
+        'rainStatus': 'Not available',
+      };
+    }
   }
 
   // Method to create a copy with optional updates
@@ -84,7 +102,6 @@ class FumigationTaskModel {
       address: address ?? this.address,
       location: location ?? this.location,
       scheduledDateTime: scheduledDateTime ?? this.scheduledDateTime,
-      weatherForecast: weatherForecast ?? this.weatherForecast,
       assignedMembers: assignedMembers ?? this.assignedMembers,
       isCompleted: isCompleted ?? this.isCompleted,
       createdBy: createdBy ?? this.createdBy,

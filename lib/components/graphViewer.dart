@@ -4,16 +4,20 @@ import 'package:intl/intl.dart';
 
 class GraphViewer extends StatelessWidget {
   final List<Map<String, dynamic>> data;
+  final List<Map<String, dynamic>>? secondList;
   final String title;
   final String yAxisLabel;
+  final String? secondListLable;
   final Color lineColor;
   final bool showDots;
 
   const GraphViewer({
     Key? key,
     required this.data,
+    this.secondList,
     required this.title,
     this.yAxisLabel = 'Count',
+    this.secondListLable,
     this.lineColor = Colors.blue,
     this.showDots = true,
   }) : super(key: key);
@@ -80,10 +84,8 @@ class GraphViewer extends StatelessWidget {
             sideTitles: SideTitles(
               showTitles: true,
               getTitlesWidget: (value, meta) {
-                // Only show some labels to avoid crowding
                 if (value.toInt() >= 0 && value.toInt() < data.length && value.toInt() % _getLabelInterval() == 0) {
                   String date = data[value.toInt()]['date'];
-                  // Format date based on whether it's a daily or monthly date
                   String displayDate = date.length > 7
                       ? DateFormat('dd/MM').format(DateTime.parse(date))
                       : DateFormat('MMM').format(DateTime.parse('$date-01'));
@@ -150,14 +152,14 @@ class GraphViewer extends StatelessWidget {
                 if (index >= 0 && index < data.length) {
                   String date = data[index]['date'];
                   int count = data[index]['count'];
+                  int secondCount = secondList![index]['count'];
 
-                  // Format date based on whether it's daily or monthly
                   String formattedDate = date.length > 7
                       ? DateFormat('dd MMM yyyy').format(DateTime.parse(date))
                       : DateFormat('MMMM yyyy').format(DateTime.parse('$date-01'));
 
                   return LineTooltipItem(
-                    '$formattedDate\n$count $yAxisLabel',
+                    '$formattedDate\n$count $yAxisLabel ${secondListLable != null ? '\n$secondCount $secondListLable' : ''}',
                     const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                   );
                 }
@@ -273,11 +275,33 @@ class HospitalizedGraphViewer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GraphViewer(
-      data: data,
-      title: 'Hospitalized Patient Statistics',
-      yAxisLabel: 'Patients',
-      lineColor: Colors.orange,
+    final List<Map<String, dynamic>> graphData = data.map((entry) {
+      return {
+        'date': entry['date'],
+        'count': entry['hospitalized'],
+      };
+    }).toList();
+    final List<Map<String, dynamic>> secondData = data.map((entry) {
+      return {
+        'date': entry['date'],
+        'count': entry['patients'],
+      };
+    }).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: GraphViewer(
+            data: graphData,
+            secondList: secondData,
+            title: 'Hospitalized Patient Statistics',
+            yAxisLabel: 'Hospitalized',
+            secondListLable: 'Patients',
+            lineColor: Colors.orange,
+          ),
+        ),
+      ],
     );
   }
 }

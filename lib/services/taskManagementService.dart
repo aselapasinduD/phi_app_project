@@ -14,7 +14,6 @@ class TaskService {
 
     try {
       task.createdBy = currentUser.id;
-
       await _firestore.collection('tasks').add(task.toFirestore());
     } catch (e) {
       debugPrint('Error creating task: $e');
@@ -22,11 +21,9 @@ class TaskService {
     }
   }
 
-  // Get tasks based on user role
   Stream<List<TaskModel>> getTasks(UserModel currentUser) {
     Query tasksQuery = _firestore.collection('tasks');
 
-    // If user is not an admin, only show tasks assigned to them
     if (currentUser.role == UserRole.user) {
       tasksQuery = tasksQuery.where('assignedMembers', arrayContains: currentUser.id);
     }

@@ -33,7 +33,7 @@ class AnalyticsDashboardService {
           .collection('denguePatientReports')
           .where('reportedDate', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
           .where('reportedDate', isLessThanOrEqualTo: Timestamp.fromDate(endDate))
-          .where('isHospitalized', isEqualTo: true)
+          .where('hospitalized', isGreaterThan: 0)
           .get();
 
       int hospitalizedPatients = 0;
@@ -126,25 +126,36 @@ class AnalyticsDashboardService {
           .collection('denguePatientReports')
           .where('reportedDate', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
           .where('reportedDate', isLessThanOrEqualTo: Timestamp.fromDate(endDate))
-          .where('isHospitalized', isEqualTo: true)
+          .where('hospitalized', isGreaterThan: 0)
           .orderBy('reportedDate')
           .get();
 
-      Map<String, int> dailyCounts = {};
+      Map<String, Map<String, int>> dailyData = {};
 
       for (var doc in snapshot.docs) {
         final data = doc.data() as Map<String, dynamic>;
         final DateTime date = (data['reportedDate'] as Timestamp).toDate();
         final String dateKey = DateFormat('yyyy-MM-dd').format(date);
-        final int patientCount = data['numberOfPatients'] as int? ?? 1;
+        final int hospitalizedTimes = data['hospitalized'] as int? ?? 1;
+        final int patientCount = data['numberOfPatients'] as int? ?? 1; // I want to include the number of patiens also to show as status not in the graph
 
-        dailyCounts[dateKey] = (dailyCounts[dateKey] ?? 0) + patientCount;
-      }
+        // dailyCounts[dateKey] = (dailyCounts[dateKey] ?? 0) + hospitalizedTimes;
 
-      List<Map<String, dynamic>> graphData = dailyCounts.entries.map((entry) {
+        if (dailyData.containsKey(dateKey)) {
+          dailyData[dateKey]!['hospitalized'] = (dailyData[dateKey]!['hospitalized'] ?? 0) + hospitalizedTimes;
+          dailyData[dateKey]!['patients'] = (dailyData[dateKey]!['patients'] ?? 0) + patientCount;
+        } else {
+          dailyData[dateKey] = {
+            'hospitalized': hospitalizedTimes,
+            'patients': patientCount,
+          };
+        }      }
+
+      List<Map<String, dynamic>> graphData = dailyData.entries.map((entry) {
         return {
           'date': entry.key,
-          'count': entry.value,
+          'hospitalized': entry.value['hospitalized'],
+          'patients': entry.value['patients'],
         };
       }).toList();
 

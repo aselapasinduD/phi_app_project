@@ -354,25 +354,34 @@ class _FumigationTaskDetailState extends State<FumigationTaskDetail> {
   List<UserModel> _assignedUsers = [];
   bool _isLoading = true;
   String? _errorMessage;
+  Map<String, String> _WeatherInfo = {};
 
   @override
   void initState() {
     super.initState();
     _loadAssignedUsers();
+
   }
 
   Future<void> _loadAssignedUsers() async {
     final currentUser = Provider.of<UserModel>(context, listen: false);
+    Map<String, String> WeatherInfo = await widget.existingTask.getWeatherInfo();
 
     setState(() {
       _isLoading = true;
       _errorMessage = null;
+      _WeatherInfo = WeatherInfo;
     });
 
     try {
-      final usersList = await _fumigationTaskService.getUsersForTaskAssignment(currentUser);
+      final allUsers = await _fumigationTaskService.getUsersForTaskAssignment(currentUser);
+
+      final List<UserModel> assignedUsersList = allUsers.where((user) =>
+          widget.existingTask.assignedMembers.contains(user.id)
+      ).toList();
+
       setState(() {
-        _assignedUsers = usersList;
+        _assignedUsers = assignedUsersList;
         _isLoading = false;
       });
     } catch (e) {
@@ -531,6 +540,26 @@ class _FumigationTaskDetailState extends State<FumigationTaskDetail> {
                         ),
                       ],
                     ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(Icons.air, size: 16),
+                        const SizedBox(width: 8),
+                        Expanded(
+                            child: Text('${_WeatherInfo['windSpeed'] ?? 'Loading...'}')
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(Icons.cloud, size: 16),
+                        const SizedBox(width: 8),
+                        Expanded(
+                            child: Text(_WeatherInfo['rainStatus'] ?? 'Loading...')
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -590,17 +619,6 @@ class _FumigationTaskDetailState extends State<FumigationTaskDetail> {
             const SizedBox(height: 24),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          // TODO: Implementation for task completion or check-in would go here
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Task check-in feature coming soon')),
-          );
-        },
-        backgroundColor: MyColors.secondaryColor,
-        icon: const Icon(Icons.check),
-        label: const Text('Check In'),
       ),
     );
   }
