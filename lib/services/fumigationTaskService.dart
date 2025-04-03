@@ -94,13 +94,6 @@ class FumigationTaskService {
     }
   }
 
-  // Fetch weather forecast (placeholder method - you'll need to integrate a weather API)
-  Future<String> getWeatherForecast(GeoPoint location, DateTime dateTime) async {
-    // Implement weather API integration here
-    // For now, return a placeholder
-    return 'Partly cloudy, Wind: 10 km/h, No rain expected';
-  }
-
   // Get list of all users for task assignment (admin)
   Future<List<UserModel>> getUsersForTaskAssignment(UserModel currentUser) async {
     if (!currentUser.canManageTasks) {

@@ -63,24 +63,9 @@ class FumigationTaskModel {
   }
 
   // Method to get weather info for every fumigation task
-  Future<Map<String, String>> getWeatherInfo() async {
-    try {
-      final weatherData = await WeatherService.getWeatherForecast(
-          location,
-          scheduledDateTime
-      );
-
-      return {
-        'windSpeed': weatherData.windSpeed,
-        'rainStatus': weatherData.rainStatus,
-      };
-    } catch (e) {
-      // debugPrint('Error getting weather information: $e');
-      return {
-        'windSpeed': 'Not available',
-        'rainStatus': 'Not available',
-      };
-    }
+  Future<WeatherData> getWeatherInfo() async {
+    final weatherData = await WeatherService.getWeatherForecast(location, scheduledDateTime);
+    return weatherData;
   }
 
   // Method to create a copy with optional updates

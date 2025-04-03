@@ -54,6 +54,7 @@ dependencies:
   fl_chart: ^0.70.2
   syncfusion_flutter_datepicker: ^29.1.35
   weather: ^3.1.1
+  url_launcher: ^6.3.1
 
 dev_dependencies:
   flutter_test:

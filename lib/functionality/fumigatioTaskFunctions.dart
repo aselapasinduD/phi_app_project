@@ -9,6 +9,7 @@ import '../models/fumigationTaskModel.dart';
 import '../services/fumigationTaskService.dart';
 import '../components/location_picker.dart';
 import '../components/map_preview.dart';
+import '../services/weatherService.dart';
 
 class FumigatioTaskFunctions extends StatefulWidget{
   final FumigationTaskModel? existingTask;
@@ -29,7 +30,6 @@ class _FumigatioTaskFunctionsState extends State<FumigatioTaskFunctions>{
   GeoPoint? _selectedLocation;
   List<String> _assignedMembers = [];
   List<UserModel> _availableUsers = [];
-  String? _weatherForecast;
 
   final FumigationTaskService _fumigationTaskService = FumigationTaskService();
 
@@ -354,7 +354,7 @@ class _FumigationTaskDetailState extends State<FumigationTaskDetail> {
   List<UserModel> _assignedUsers = [];
   bool _isLoading = true;
   String? _errorMessage;
-  Map<String, String> _WeatherInfo = {};
+  WeatherData? _WeatherInfo;
 
   @override
   void initState() {
@@ -365,12 +365,12 @@ class _FumigationTaskDetailState extends State<FumigationTaskDetail> {
 
   Future<void> _loadAssignedUsers() async {
     final currentUser = Provider.of<UserModel>(context, listen: false);
-    Map<String, String> WeatherInfo = await widget.existingTask.getWeatherInfo();
+    WeatherData weatherInfo = await widget.existingTask.getWeatherInfo();
 
     setState(() {
       _isLoading = true;
       _errorMessage = null;
-      _WeatherInfo = WeatherInfo;
+      _WeatherInfo = weatherInfo;
     });
 
     try {
@@ -546,17 +546,17 @@ class _FumigationTaskDetailState extends State<FumigationTaskDetail> {
                         const Icon(Icons.air, size: 16),
                         const SizedBox(width: 8),
                         Expanded(
-                            child: Text('${_WeatherInfo['windSpeed'] ?? 'Loading...'}')
+                            child: Text('${_WeatherInfo?.windSpeed ?? 'Loading...'}')
                         ),
                       ],
                     ),
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        const Icon(Icons.cloud, size: 16),
+                        Icon(_WeatherInfo!.isRaining ? Icons.cloud : Icons.sunny, size: 16),
                         const SizedBox(width: 8),
                         Expanded(
-                            child: Text(_WeatherInfo['rainStatus'] ?? 'Loading...')
+                            child: Text(_WeatherInfo?.rainStatus ?? 'Loading...')
                         ),
                       ],
                     ),
