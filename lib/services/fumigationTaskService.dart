@@ -96,7 +96,7 @@ class FumigationTaskService {
 
   // Get list of all users for task assignment (admin)
   Future<List<UserModel>> getUsersForTaskAssignment(UserModel currentUser) async {
-    if (!currentUser.canManageTasks) {
+    if (!currentUser.canViewFumigationTasks) {
       throw Exception('Only admin users can assign tasks');
     }
 

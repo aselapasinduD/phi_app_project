@@ -57,6 +57,7 @@ class UserModel extends ChangeNotifier {
 
   // Permissions methods
   bool get canManageTasks => role == UserRole.admin;
+  bool get canViewFumigationTasks => role == UserRole.admin || role == UserRole.user;
   bool get canCreateDengueReports => role == UserRole.admin || role == UserRole.user;
   bool get canCreateBreedingReports => role == UserRole.admin || role == UserRole.user;
   bool get canCreateBreedingAndDengueReports => role == UserRole.admin || role == UserRole.user;
