@@ -39,7 +39,7 @@ class AnalyticsDashboardService {
       int hospitalizedPatients = 0;
       for (var doc in snapshot.docs) {
         final data = doc.data() as Map<String, dynamic>;
-        hospitalizedPatients += (data['numberOfPatients'] as int? ?? 1);
+        hospitalizedPatients += (data['hospitalized'] as int? ?? 1);
       }
 
       return hospitalizedPatients;

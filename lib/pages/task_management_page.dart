@@ -104,6 +104,7 @@ class TaskListTile extends StatelessWidget{
                 Text('Due Date: ${DateFormat.yMd().format(task.dueDate)}', style: TextStyle(fontSize: 12, color: Colors.grey[700])),
               ],
             ),
+            if(task.address != "")
             Row(
               children: [
                 Expanded(

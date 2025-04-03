@@ -348,11 +348,6 @@ class _AnalyticsDashboardPage extends State<AnalyticsDashboardPage> {
         ? (_hospitalizedPatientCount / _denguePatientCount) * 100
         : 0;
 
-    // Calculate fumigation to breeding site ratio
-    double fumigationRatio = _breedingSitesCount > 0
-        ? _completedFumigationsCount / _breedingSitesCount
-        : 0;
-
     return Card(
       elevation: 2,
       child: Padding(
@@ -373,13 +368,6 @@ class _AnalyticsDashboardPage extends State<AnalyticsDashboardPage> {
               '${hospitalizationRate.toStringAsFixed(1)}%',
               hospitalizationRate > 30 ? Colors.red : Colors.green,
               'Percentage of dengue patients requiring hospitalization',
-            ),
-            const Divider(),
-            _buildSummaryItem(
-              'Fumigation Coverage',
-              '${fumigationRatio.toStringAsFixed(2)}x',
-              fumigationRatio < 1 ? Colors.orange : Colors.green,
-              'Ratio of fumigations to identified breeding sites',
             ),
             const Divider(),
             _buildSummaryItem(

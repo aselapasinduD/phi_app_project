@@ -22,10 +22,12 @@ class _GISPage extends State<GISPage>{
   DateTime _startDate = DateTime.now().subtract(const Duration(days: 30));
   DateTime _endDate = DateTime.now();
   bool _isLoading = false;
+  bool _useStreamlines = true;
 
   Map<MarkerId, Marker> _markers = {};
   Map<CircleId, Circle> _densityCircles = {};
   Map<CircleId, Circle> _windCircles = {};
+  Map<PolygonId, Polygon> _windPolygons = {};
 
   bool _showPatients = true;
   bool _showFumigations = true;
@@ -34,7 +36,7 @@ class _GISPage extends State<GISPage>{
   bool _showWindDirection = false;
 
   LatLngBounds? _currentBounds;
-  // WindLayer? _windLayer;
+  WindLayer? _windLayer;
   Timer? _boundsUpdateTimer;
 
   final CameraPosition _initialPosition = const CameraPosition(
@@ -50,7 +52,7 @@ class _GISPage extends State<GISPage>{
 
   @override
   void dispose() {
-    // _windLayer?.dispose();
+    _windLayer?.dispose();
     _boundsUpdateTimer?.cancel();
     super.dispose();
   }
@@ -80,6 +82,23 @@ class _GISPage extends State<GISPage>{
         _isLoading = false;
       });
     }
+  }
+
+  void _initializeWindLayer() {
+    print('-----------------------${_currentBounds}-----------------------');
+    if (_currentBounds != null) {
+      _windLayer ??= WindLayer(
+        onCirclesUpdated: _updateWindCircles,
+        onPolygonsUpdated: _updateWindPolygons,
+      );
+      _windLayer!.initialize(_currentBounds!);
+    }
+  }
+
+  void _updateWindPolygons(Map<PolygonId, Polygon> polygons) {
+    setState(() {
+      _windPolygons = polygons;
+    });
   }
 
   Future<void> _loadDensityCircles() async {
@@ -130,25 +149,31 @@ class _GISPage extends State<GISPage>{
     });
   }
 
-  // void _toggleWindDirection(bool value) {
-  //   setState(() {
-  //     _showWindDirection = value;
-  //   });
-  //
-  //   if (value) {
-  //     // Initialize wind layer if map bounds are available
-  //     if (_currentBounds != null) {
-  //       _windLayer ??= WindLayer(onWindLayerUpdated: _updateWindCircles);
-  //       _windLayer!.initialize(_currentBounds!);
-  //     }
-  //   } else {
-  //     // Dispose wind layer when turned off
-  //     _windLayer?.dispose();
-  //     setState(() {
-  //       _windCircles.clear();
-  //     });
-  //   }
-  // }
+  void _toggleWindVisualizationMode() {
+    setState(() {
+      _useStreamlines = !_useStreamlines;
+    });
+
+    if (_windLayer != null) {
+      _windLayer!.updateVisualizationMode(_useStreamlines);
+    }
+  }
+
+  void _toggleWindDirection(bool value) {
+    setState(() {
+      _showWindDirection = value;
+    });
+
+    if (value) {
+      _initializeWindLayer();
+    } else {
+      _windLayer?.dispose();
+      setState(() {
+        _windCircles.clear();
+        _windPolygons.clear();
+      });
+    }
+  }
 
   void _updateMarkers(Map<String, List<GISMapData>> mapData) {
     Map<MarkerId, Marker> markers = {};
@@ -205,9 +230,14 @@ class _GISPage extends State<GISPage>{
 
   void _onMapCreated(GoogleMapController controller) {
     _mapController = controller;
-    // _boundsUpdateTimer = Timer.periodic(const Duration(seconds: 5), (_) async {
-    //   _updateMapBounds();
-    // });
+
+    // Get initial map bounds
+    _mapController!.getVisibleRegion().then((bounds) {
+      _currentBounds = bounds;
+      if (_showWindDirection) {
+        _initializeWindLayer();
+      }
+    });
   }
 
   // Future<void> _updateMapBounds() async {
@@ -275,9 +305,17 @@ class _GISPage extends State<GISPage>{
   Widget build(BuildContext context) {
     final Set<Circle> allCircles = Set<Circle>();
     allCircles.addAll(_densityCircles.values);
-    if (_showWindDirection) {
-      allCircles.addAll(_windCircles.values);
-    }
+    allCircles.addAll(_windCircles.values);
+
+    // if (_showWindDirection && !_useStreamlines) {
+    //   allCircles.addAll(_windCircles.values);
+    // }
+    final Set<Polygon> allPolygons = Set<Polygon>();
+    allPolygons.addAll(_windPolygons.values);
+
+    // if (_showWindDirection && _useStreamlines) {
+    //   allPolygons.addAll(_windPolygons.values);
+    // }
 
     return Scaffold(
       appBar: AppBar(
@@ -297,14 +335,24 @@ class _GISPage extends State<GISPage>{
             initialCameraPosition: _initialPosition,
             markers: Set<Marker>.of(_markers.values),
             circles: allCircles,
+            polygons: allPolygons,
             compassEnabled: true,
             myLocationEnabled: true,
             myLocationButtonEnabled: true,
             mapToolbarEnabled: true,
             mapType: MapType.normal,
-            onCameraMove: (_) {
-              // This will trigger on any camera movement
-              // We'll use the timer-based approach to avoid excessive updates
+            onCameraMove: (CameraPosition position) {
+              if (_mapController != null) {
+                _mapController!.getVisibleRegion().then((bounds) {
+                  _currentBounds = bounds;
+                  if (_showWindDirection && _windLayer != null) {
+                    _boundsUpdateTimer?.cancel();
+                    _boundsUpdateTimer = Timer(const Duration(milliseconds: 500), () {
+                      _windLayer!.updateBounds(bounds);
+                    });
+                  }
+                });
+              }
             },
             onCameraIdle: () {
               // Camera movement completed, update bounds now
@@ -408,6 +456,23 @@ class _GISPage extends State<GISPage>{
                           _showHeatmap = selected;
                         });
                         _loadMapData();
+                      },
+                    ),
+                  ),
+                  SizedBox(
+                    width: 130,
+                    child: ChoiceChip(
+                      label: Center(
+                        child: Text('Wind Direction', style: TextStyle(
+                            fontSize: 12,
+                            color: _showWindDirection ? Colors.white : Colors.grey[800]),
+                        ),
+                      ),
+                      selected: _showWindDirection,
+                      selectedColor: Colors.deepPurple,
+                      checkmarkColor: Colors.white,
+                      onSelected: (bool selected) {
+                        _toggleWindDirection(selected);
                       },
                     ),
                   ),

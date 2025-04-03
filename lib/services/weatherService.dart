@@ -11,7 +11,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class WeatherService {
   static final WeatherFactory _weatherFactory = WeatherFactory('5a3724da6e42100f6f689e48bb61a5a8');
-  static const String _windyComApiKey = 'YOUR_WINDY_API_KEY';
+  static const String _windyComApiKey = 'HaHS5hcq1sNoV2DX3ENgMUwYEMavYojK';
   static const String _windyComBaseUrl = 'https://api.windy.com/api/point-forecast/v2';
   static Timer? _refreshTimer;
   static Function(List<WindDirectionData>)? onWindDataUpdated;
@@ -24,10 +24,11 @@ class WeatherService {
 
       if (difference > 5) {
         return WeatherData(
-            windSpeed: 'Unavailable beyond 5 days forecast',
-            windDirection: 'Unavailable',
-            rainStatus: 'Forecast unavailable',
-            isRaining: true,
+          windSpeed: 'Unavailable beyond 5 days forecast',
+          windDirection: 'Unavailable',
+          windDirectionDegrees: 0.0,
+          rainStatus: 'Forecast unavailable',
+          isRaining: true,
         );
       }
 
@@ -46,10 +47,11 @@ class WeatherService {
 
       if (targetDateForecasts.isEmpty) {
         return WeatherData(
-            windSpeed: 'No data available',
-            windDirection: 'No data available',
-            rainStatus: 'No data available',
-            isRaining: false,
+          windSpeed: 'No data available',
+          windDirection: 'No data available',
+          windDirectionDegrees: 0.0,
+          rainStatus: 'No data available',
+          isRaining: false,
         );
       }
 
@@ -93,10 +95,11 @@ class WeatherService {
           '$rainStatus';
 
       return WeatherData(
-          windSpeed: windSpeed,
-          windDirection: _getCardinalDirection(windDirection),
-          rainStatus: rainStatus,
-          isRaining: isRaining,
+        windSpeed: windSpeed,
+        windDirection: _getCardinalDirection(windDirection),
+        windDirectionDegrees: windDirection,
+        rainStatus: rainStatus,
+        isRaining: isRaining,
       );
 
     } catch (e) {
@@ -104,13 +107,14 @@ class WeatherService {
       return WeatherData(
           windSpeed: 'Error',
           windDirection: 'Error',
+          windDirectionDegrees: 0.0,
           rainStatus: 'Error',
           isRaining: false,
       );
     }
   }
 
-  // // Get current wind data for multiple locations
+  // Get current wind data for multiple locations
   // static Future<List<WindDirectionData>> getCurrentWindData(List<GeoPoint> locations) async {
   //   List<WindDirectionData> windDataList = [];
   //
@@ -137,37 +141,9 @@ class WeatherService {
   //   }
   // }
 
-  // // Start periodic wind data updates
-  // static void startWindDataUpdates(List<GeoPoint> locations, Function(List<WindDirectionData>) callback) {
-  //   onWindDataUpdated = callback;
-  //
-  //   getCurrentWindData(locations).then((data) {
-  //     if (onWindDataUpdated != null) {
-  //       onWindDataUpdated!(data);
-  //     }
-  //   });
-  //
-  //   _refreshTimer?.cancel();
-  //
-  //   // Set up timer for every 30 minutes
-  //   _refreshTimer = Timer.periodic(const Duration(minutes: 30), (_) {
-  //     getCurrentWindData(locations).then((data) {
-  //       if (onWindDataUpdated != null) {
-  //         onWindDataUpdated!(data);
-  //       }
-  //     });
-  //   });
-  // }
-
-  // // Stop updates when no longer needed
-  // static void stopWindDataUpdates() {
-  //   _refreshTimer?.cancel();
-  //   _refreshTimer = null;
-  //   onWindDataUpdated = null;
-  // }
-
   // Get wind data for a region (not just points)
   static Future<WindRegionData> getRegionalWindData(LatLngBounds bounds) async {
+    print('--------------------------getRegionalWindData--------------------');
     try {
       final response = await http.post(
         Uri.parse('$_windyComBaseUrl/rectangle'),
@@ -183,11 +159,13 @@ class WeatherService {
             bounds.northeast.latitude
           ],
           'model': 'gfs', // Weather forecast model
-          'parameters': ['wind', 'windDirection'],
+          'parameters': ['wind'],
           'levels': ['surface'],
           'key': _windyComApiKey,
         }),
       );
+      
+      print('-----------------------------${response.statusCode}---------------------------');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -195,6 +173,8 @@ class WeatherService {
         // Parse grid data from Windy API
         final windGrid = data['wind']['surface'];
         final directionGrid = data['windDirection']['surface'];
+        
+        print('-----------------${windGrid}------------------');
 
         return WindRegionData(
           windGrid: windGrid,
@@ -214,26 +194,33 @@ class WeatherService {
   }
 
   // Update how we start wind data updates to use Windy API
-  // static void startWindDataUpdates(List<GeoPoint> locations, Function(List<WindDirectionData>) callback) {
-  //   onWindDataUpdated = callback;
-  //
-  //   getWindyData(locations).then((data) {
-  //     if (onWindDataUpdated != null) {
-  //       onWindDataUpdated!(data);
-  //     }
-  //   });
-  //
-  //   _refreshTimer?.cancel();
-  //
-  //   // Refresh every 30 minutes
-  //   _refreshTimer = Timer.periodic(const Duration(minutes: 30), (_) {
-  //     getWindyData(locations).then((data) {
-  //       if (onWindDataUpdated != null) {
-  //         onWindDataUpdated!(data);
-  //       }
-  //     });
-  //   });
-  // }
+  static void startWindDataUpdates(List<GeoPoint> locations, Function(List<WindDirectionData>) callback) {
+    onWindDataUpdated = callback;
+
+    // getWindyData(locations).then((data) {
+    //   if (onWindDataUpdated != null) {
+    //     onWindDataUpdated!(data);
+    //   }
+    // });
+
+    _refreshTimer?.cancel();
+
+    // Refresh every 30 minutes
+    // _refreshTimer = Timer.periodic(const Duration(minutes: 30), (_) {
+    //   getWindyData(locations).then((data) {
+    //     if (onWindDataUpdated != null) {
+    //       onWindDataUpdated!(data);
+    //     }
+    //   });
+    // });
+  }
+
+  // Rest of existing code
+  static void stopWindDataUpdates() {
+    _refreshTimer?.cancel();
+    _refreshTimer = null;
+    onWindDataUpdated = null;
+  }
 
   // Convert wind degrees to cardinal direction
   static String _getWindDirectionName(double degrees) {
@@ -242,6 +229,7 @@ class WeatherService {
     int index = ((degrees + 11.25) % 360 / 22.5).floor();
     return directions[index];
   }
+
   static String _getCardinalDirection(double degrees) {
     const directions = ['North', 'Northeast', 'East', 'Southeast', 'South', 'Southwest', 'West', 'Northwest'];
     int index = ((degrees + 11.25) % 360 / 44).floor();
@@ -253,12 +241,14 @@ class WeatherService {
 class WeatherData {
   final String windSpeed;
   final String windDirection;
+  final double windDirectionDegrees;
   final String rainStatus;
   final bool isRaining;
 
   WeatherData({
     required this.windSpeed,
     required this.windDirection,
+    required this.windDirectionDegrees,
     required this.rainStatus,
     required this.isRaining,
   });

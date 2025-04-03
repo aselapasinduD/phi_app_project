@@ -545,9 +545,13 @@ class _FumigationTaskDetailState extends State<FumigationTaskDetail> {
                       children: [
                         const Icon(Icons.air, size: 16),
                         const SizedBox(width: 8),
-                        Expanded(
-                            child: Text('${_WeatherInfo?.windSpeed ?? 'Loading...'}')
+                        SizedBox(
+                          width: 250,
+                          child:  Expanded(
+                              child: Text('${_WeatherInfo?.windSpeed ?? 'Loading...'}')
+                          ),
                         ),
+                        Icon(_getCardinalDirection(_WeatherInfo!.windDirectionDegrees), size: 16),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -621,5 +625,11 @@ class _FumigationTaskDetailState extends State<FumigationTaskDetail> {
         ),
       ),
     );
+  }
+
+  static IconData _getCardinalDirection(double degrees) {
+    const List<IconData> directions = [Icons.north, Icons.north_east, Icons.east, Icons.south_east, Icons.south, Icons.south_west, Icons.west, Icons.north_west];
+    int index = ((degrees + 11.25) % 360 / 44).floor();
+    return directions[index];
   }
 }
